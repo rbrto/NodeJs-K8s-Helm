@@ -1,0 +1,57 @@
+
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: postgres
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-25" 
+  labels:
+    name: database
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        service: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:10.5-alpine
+        volumeMounts:
+        - name: postgres-volume-mount
+          mountPath: /var/lib/postgresql/data
+          subPath: postgres
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: k8s-nodejschart-secret
+              key: user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: k8s-nodejschart-secret
+              key: password
+      restartPolicy: Always
+      volumes:
+      - name: postgres-volume-mount
+        persistentVolumeClaim:
+          claimName: nodejschart-pvc
+
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-25"
+  labels:
+    service: postgres
+spec:
+  selector:
+    service: postgres
+  type: ClusterIP
+  ports:
+  - port: 5432

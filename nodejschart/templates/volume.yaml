@@ -1,0 +1,32 @@
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: {{ template "nodejschart.name" . }}-pv
+  annotations:
+    "helm.sh/hook": pre-install
+    "helm.sh/hook-weight": "-40"
+spec:
+  storageClassName: {{ .Values.volumes.storageClassName }}
+  accessModes:
+    - {{ .Values.volumes.accessModes }}
+  capacity:
+    storage: {{ .Values.volumes.storage }}
+  gcePersistentDisk:
+    pdName: {{ .Values.volumes.gcePersistentDisk.pdName }}
+    fsType: {{ .Values.volumes.gcePersistentDisk.fsType }}
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ template "nodejschart.name" . }}-pvc
+  annotations:
+    "helm.sh/hook": pre-install
+    "helm.sh/hook-weight": "-35"
+    
+spec:
+  accessModes:
+    - {{ .Values.volumes.accessModes }}
+  resources:
+    requests:
+      storage: {{ .Values.volumes.storage }}
+  volume:  {{ template "nodejschart.name" . }}-pv
